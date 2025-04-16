@@ -1,0 +1,56 @@
+# Python 缓存文件
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 虚拟环境目录
+venv/
+env/
+ENV/
+
+# VSCode 或其他 IDE 配置
+.vscode/
+.idea/
+*.swp
+
+# 环境变量文件
+.env
+*.env
+
+# 数据库文件
+*.db
+*.sqlite3
+
+# 日志文件
+*.log
+
+# 测试报告
+htmlcov/
+.coverage
+.tox/
+.nox/
+
+# mypy / pyright
+.mypy_cache/
+.pyright/
+
+# pytest 缓存
+.pytest_cache/
+
+# Jupyter notebook checkpoint
+.ipynb_checkpoints/
+
+# 输出目录
+dist/
+build/
+*.egg-info/
+
+# 操作系统杂项
+.DS_Store
+Thumbs.db
+
+# FastAPI 自动生成的 docs
+openapi.json
+
+# Poetry (如使用)
+poetry.lock
