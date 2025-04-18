@@ -1,3 +1,5 @@
+from app.schemas.real_time_schemas import RealTimeData
+from app.schemas.schedule_schemas import RealTimeSchedule
 from app.services.real_time_service import (
     get_real_time_data,
     get_real_time_schedule_data,
@@ -21,7 +23,7 @@ router = APIRouter(
 )
 
 
-@router.get("/schedules", response_model=ResponseWrapper, tags=["schedules"])
+@router.get("/schedules", response_model=ResponseWrapper[list[SeasonScheduleResponse]], tags=["赛程"])
 def get_schedules(
     session: SessionDep, schedule_query: Annotated[ScheduleQuery, Query()]
 ):
@@ -41,7 +43,7 @@ def get_schedules(
     return ResponseWrapper(data=schedules_all)
 
 
-@router.get("/teams", response_model=ResponseWrapper, tags=["teams"])
+@router.get("/teams", response_model=ResponseWrapper[list[TeamResponse]], tags=["队伍"])
 def get_teams(session: SessionDep, team_query: Annotated[TeamQuery, Query()]):
     schedule_id = team_query.schedule_id
     schedule_ids = team_query.schedule_ids
@@ -59,7 +61,7 @@ def get_teams(session: SessionDep, team_query: Annotated[TeamQuery, Query()]):
     return ResponseWrapper(data=teams_all)
 
 
-@router.get("/players", response_model=ResponseWrapper, tags=["teams"])
+@router.get("/players", response_model=ResponseWrapper[list[PlayerResponse]], tags=["选手"])
 def get_players(session: SessionDep):
     players_all = get_all_players(session)
     if not players_all:
@@ -67,7 +69,7 @@ def get_players(session: SessionDep):
     return ResponseWrapper(data=players_all)
 
 
-@router.get("/seasons", response_model=ResponseWrapper, tags=["seasons"])
+@router.get("/seasons", response_model=ResponseWrapper[Season], tags=["赛事"])
 def get_seasons(session: SessionDep, season_query: Annotated[SeasonQuery, Query()]):
     season_start_time = season_query.season_start_time
     season_end_time = season_query.season_end_time
@@ -92,7 +94,7 @@ def get_seasons(session: SessionDep, season_query: Annotated[SeasonQuery, Query(
     return ResponseWrapper(data=seasons_all)
 
 
-@router.get("/matches", response_model=ResponseWrapper, tags=["matches"])
+@router.get("/matches", response_model=ResponseWrapper[MatchResponse], tags=["对局"])
 def get_matches(session: SessionDep, match_query: Annotated[MatchQuery, Query()]):
     schedule_id = match_query.schedule_id
     schedule_ids = match_query.schedule_ids
@@ -111,7 +113,7 @@ def get_matches(session: SessionDep, match_query: Annotated[MatchQuery, Query()]
 
 
 @router.get(
-    "/real-time-match", response_model=ResponseWrapper, tags=["real time macth"]
+    "/real_time_match", response_model=ResponseWrapper[RealTimeData], tags=["实时对局"]
 )
 def get_real_time_match(session: SessionDep):
     real_time_match = get_real_time_data(session)
@@ -121,7 +123,7 @@ def get_real_time_match(session: SessionDep):
 
 
 @router.get(
-    "/real-time-schedule", response_model=ResponseWrapper, tags=["real time schedule"]
+    "/real_time_schedule", response_model=ResponseWrapper[RealTimeSchedule], tags=["实时赛程"]
 )
 def get_real_time_schedule(session: SessionDep):
     real_time_schedule = get_real_time_schedule_data(session)

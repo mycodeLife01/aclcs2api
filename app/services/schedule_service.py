@@ -57,6 +57,7 @@ def sort_schedules_by_season(schedules: list[Schedule]):
                 schedule_res = ScheduleResponse(
                     scheduleId=schedule.schedule_id,
                     scheduleName=schedule.schedule_name,
+                    scheduleType=schedule.schedule_type,
                     teamScoreList=team_score_list,
                     scheduleStatus=schedule.schedule_status,
                     stageId=schedule.stage_id,

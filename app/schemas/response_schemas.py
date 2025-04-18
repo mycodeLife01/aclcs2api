@@ -1,7 +1,7 @@
-from typing import Any, Optional
+from typing import Any, Optional, Generic, TypeVar
 from pydantic import BaseModel
+T = TypeVar("T")
 
-
-class ResponseWrapper(BaseModel):
+class ResponseWrapper(BaseModel, Generic[T]):
     message: Optional[str] = "success"
-    data: Any
+    data: Optional[T] = None
