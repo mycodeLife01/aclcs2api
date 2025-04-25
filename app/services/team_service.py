@@ -2,33 +2,28 @@ from sqlmodel import Session
 from ..core.logger import logger
 from ..crud.team_crud import *
 from ..schemas.team_schemas import *
+from typing import Optional
 
 
-def get_all_teams(session: Session):
+def fetch_teams(
+    session: Session,
+    *,
+    schedule_id: Optional[str] = None,
+    schedule_ids: Optional[list[str]] = None,
+):
     try:
-        teams_all = query_all_teams(session)
-        return to_team_response(teams_all)
+        if schedule_id:
+            teams_raw = query_teams_by_schedule_id(session, schedule_id)
+        elif schedule_ids:
+            teams_raw = query_teams_by_schedule_ids(session, schedule_ids)
+        else:
+            teams_raw = query_all_teams(session)
+        return parse_teams(teams_raw)
     except Exception as e:
         logger.error(f"Error while getting all teams:{e}", exc_info=True)
 
 
-def get_teams_by_schedule_id(session: Session, schedule_id: str):
-    try:
-        teams_by_schedule_id = query_teams_by_schedule_id(session, schedule_id)
-        return to_team_response(teams_by_schedule_id)
-    except Exception as e:
-        logger.error(f"Error while getting all teams:{e}", exc_info=True)
-
-
-def get_teams_by_schedule_ids(session: Session, schedule_ids: list[str]):
-    try:
-        teams_by_schedule_id = query_teams_by_schedule_ids(session, schedule_ids)
-        return to_team_response(teams_by_schedule_id)
-    except Exception as e:
-        logger.error(f"Error while getting all teams:{e}", exc_info=True)
-
-
-def to_team_response(teams: list[Team]):
+def parse_teams(teams: list[Team]):
     try:
         teams_result = []
         for team in teams:

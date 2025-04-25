@@ -1,3 +1,7 @@
+from operator import attrgetter
+from pickle import TRUE
+
+from sqlalchemy import true
 from ..crud.schedule_crud import *
 from sqlmodel import Session
 from ..core.logger import logger
@@ -6,76 +10,62 @@ from ..schemas.schedule_schemas import (
     TeamScore,
     SeasonScheduleResponse,
 )
+from itertools import groupby
+from typing import Optional
 
 
-def get_all_schedules(session: Session):
+def fetch_schedules(
+    session: Session,
+    *,
+    season_id: Optional[int] = None,
+    season_ids: Optional[list[int]] = None,
+) -> list[Schedule]:
     try:
-        return sort_schedules_by_season(query_all_schedules(session))
+        if season_id is not None:
+            raw = query_schedules_by_season_id(session, season_id)
+        elif season_ids is not None:
+            raw = query_schedules_by_season_ids(session, season_ids)
+        else:
+            raw = query_all_schedules(session)
+        return parse_schedules(raw)
     except Exception as e:
-        logger.error(f"Error while getting all schedules:{e}", exc_info=True)
+        logger.error(
+            f"Error while getting schedules: (season_id={season_id}, season_ids={season_ids}): {e}",
+            exc_info=True,
+        )
         return []
 
 
-def get_schedules_by_season_id(session: Session, season_id: int):
-    try:
-        return sort_schedules_by_season(query_schedules_by_season_id(session, season_id))
-    except Exception as e:
-        logger.error(f"Error while getting schedules by season id:{e}", exc_info=True)
-        return []
-    
-def get_schedules_by_season_ids(session: Session, season_ids: list[int]):
-    try:
-        return sort_schedules_by_season(query_schedules_by_season_ids(session, season_ids))
-    except Exception as e:
-        logger.error(f"Error while getting schedules by season id:{e}", exc_info=True)
-        return []
-
-
-def sort_schedules_by_season(schedules: list[Schedule]):
+def parse_schedules(schedules: list[Schedule]) -> list[SeasonScheduleResponse]:
     if not schedules:
-        return {}
-    grouped = {}
-    result = []
-    try:
-        for s in schedules:
-            season_id = s.season_id
-            if season_id not in grouped:
-                grouped[season_id] = [s]
-            else:
-                grouped[season_id].append(s)
-        for season_id, schedules in grouped.items():
-            schedule_list = []
-            for schedule in schedules:
-                team_score_list = []
-                team_1_data = TeamScore(
-                    teamId=schedule.team_1, score=schedule.team_1_score
-                )
-                team_2_data = TeamScore(
-                    teamId=schedule.team_2, score=schedule.team_2_score
-                )
-                team_score_list.extend([team_1_data, team_2_data])
-                schedule_res = ScheduleResponse(
-                    scheduleId=schedule.schedule_id,
-                    scheduleName=schedule.schedule_name,
-                    scheduleType=schedule.schedule_type,
-                    teamScoreList=team_score_list,
-                    scheduleStatus=schedule.schedule_status,
-                    stageId=schedule.stage_id,
-                    stageName=schedule.stage_name,
-                    scheduleStartTime=schedule.schedule_start_time,
-                    scheduleRealStartTime=schedule.schedule_real_start_time,
-                    scheduleRealEndTime=schedule.schedule_real_end_time,
-                )
-                schedule_list.append(schedule_res)
-            season_schedule_res = SeasonScheduleResponse(
-                seasonId=season_id, scheduleList=schedule_list
+        return []
+    schedules_sorted = sorted(
+        schedules,
+        key=lambda s: (s.season_id, tuple(map(int, s.schedule_id.split("-")))),
+    )
+    result: list[SeasonScheduleResponse] = []
+    for season_id, grouped_schedules in groupby(
+        schedules_sorted, key=attrgetter("season_id")
+    ):
+        schedule_list = [
+            ScheduleResponse(
+                scheduleId=s.schedule_id,
+                scheduleName=s.schedule_name,
+                scheduleType=s.schedule_type,
+                scheduleStatus=s.schedule_status,
+                teamScoreList=[
+                    TeamScore(teamId=s.team_1, score=s.team_1_score),
+                    TeamScore(teamId=s.team_2, score=s.team_2_score),
+                ],
+                stageId=s.stage_id,
+                stageName=s.stage_name,
+                scheduleStartTime=s.schedule_start_time,
+                scheduleRealStartTime=s.schedule_real_start_time,
+                scheduleRealEndTime=s.schedule_real_end_time,
             )
-            result.append(season_schedule_res)
-        result.sort(key=lambda item: item.seasonId)
-        for r in result:
-            schedule_list = r.scheduleList
-            schedule_list.sort(key=lambda s: tuple(map(int, s.scheduleId.split("-"))))
-        return result
-    except Exception as e:
-        logger.error(f"Error while sorting schedules:{e}", exc_info=True)
-        return {}
+            for s in grouped_schedules
+        ]
+        result.append(
+            SeasonScheduleResponse(seasonId=season_id, scheduleList=schedule_list)
+        )
+    return result

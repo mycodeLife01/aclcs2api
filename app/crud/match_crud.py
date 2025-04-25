@@ -14,7 +14,7 @@ def query_all_matches(session: Session):
 
 def query_matches_by_schedule_id(session: Session, schedule_id: str):
     try:
-        stmt = select(Match).where(Match.scheduleId == schedule_id)
+        stmt = select(Match).where(Match.schedule_id == schedule_id)
         matches_by_schedule_id = session.exec(stmt).all()
         return matches_by_schedule_id
     except Exception as e:
@@ -23,7 +23,7 @@ def query_matches_by_schedule_id(session: Session, schedule_id: str):
 
 def query_matches_by_schedule_ids(session: Session, schedule_ids: list[str]):
     try:
-        stmt = select(Match).where(Match.scheduleId.in_(schedule_ids))
+        stmt = select(Match).where(Match.schedule_id.in_(schedule_ids))
         matches_by_schedule_ids = session.exec(stmt).all()
         return matches_by_schedule_ids
     except Exception as e:
