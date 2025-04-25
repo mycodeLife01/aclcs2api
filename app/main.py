@@ -7,6 +7,7 @@ app = FastAPI(
     title="ACL CS2 External API",
     version="1.0",
     swagger_ui_parameters={"defaultModelsExpandDepth": -1},
+    root_path="/acl/cs"
 )
 app.include_router(external.router)
 origins = ["*"]
